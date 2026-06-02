@@ -1,0 +1,68 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum Status {
+  TODO
+  IN_PROGRESS
+  DONE
+  BLOCKED
+}
+
+model Department {
+  id        String         @id @default(uuid())
+  name      String         @unique
+  users     User[]
+  reports   WeeklyReport[]
+  createdAt DateTime       @default(now())
+}
+
+model User {
+  id           String         @id @default(uuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  role         Role           @default(EMPLOYEE)
+  departmentId String?
+  department   Department?    @relation(fields: [departmentId], references: [id])
+  tasks        Task[]
+  reports      WeeklyReport[]
+  createdAt    DateTime       @default(now())
+}
+
+model Task {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  status         Status   @default(TODO)
+  category       String   @default("OTHER")
+  taskDate       DateTime @default(now())
+  estimatedHours Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model WeeklyReport {
+  id               String     @id @default(uuid())
+  departmentId     String
+  department       Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  startDate        DateTime
+  endDate          DateTime
+  executiveSummary String
+  aiInsights       Json // Insights estruturados (conquistas, gargalos, ações)
+  generatedById    String?
+  generatedBy      User?      @relation(fields: [generatedById], references: [id])
+  createdAt        DateTime   @default(now())
+}
